@@ -11,15 +11,15 @@ from xml.etree.ElementTree import Element
 from xml.etree.ElementTree import SubElement
 
 class XmlWriter():
-	def __init__(self, filename):
+	def __init__(self, filename, numQueries):
 		print("Writing to file: {}".format(filename))
+		self.numQueries = numQueries
+		self.hopsList = []
+		self.queryTimeout = 0
 		self.file = open(filename, 'w')
 		self.root = Element('root')
-		self.hopsList = []
-
-	def pushHeader(self, args):
-		rootHeader = SubElement(self.root, 'header')
-		XmlWriter.createSubElement(rootHeader, "numQueries", str(args.queries))
+		self.rootHeader = SubElement(self.root, 'header')
+		self.rootHeader.set("numQueries", str(numQueries))
 
 	def prettify(self, elem):
 	    string = ElementTree.tostring(elem, 'utf-8')
@@ -29,24 +29,19 @@ class XmlWriter():
 	def push(self, data):
 		self.hopsList.append(data)
 
-	@staticmethod
-	def createSubElement(root, name, value):
-		elem = SubElement(root, name)
-		elem.text = value
-
 	def flush(self):
 		rootHops = SubElement(self.root, "hops")
+		self.rootHeader.set("queryTimeouts", str(self.queryTimeout))		
 		for item in self.hopsList:
-			print(item)
 			entry = SubElement(rootHops, "entry")
-			XmlWriter.createSubElement(entry, "id", item["id"])
-			XmlWriter.createSubElement(entry, "ip", item["ip"])
-			XmlWriter.createSubElement(entry, "dns", item["dns"])
+			entry.set("id", item["id"])
+			entry.set("ip", item["ip"])
+			entry.set("dns", item["dns"])
 			queries = SubElement(entry, "queries")
 			for queryData in item["queries"]:
 				query = SubElement(queries, "query")
-				XmlWriter.createSubElement(query, "value", queryData["value"])
-				XmlWriter.createSubElement(query, "unit", queryData["unit"])
+				query.set("value", queryData["value"])
+				query.set("unit", queryData["unit"])
 		self.file.write(self.prettify(self.root))
 		self.file.close()
 
@@ -104,15 +99,19 @@ def parseTracerouteLine(writer, line):
 		hop = {}
 		hop["id"] = words.pop(0)
 		hop["dns"] = words.pop(0)
-		hop["ip"] = words.pop(0)
+		hop["ip"] = words.pop(0)[1:-1]
 		queries = []
-		while len(words) > 0:
-			query = {}
-			query["value"] = words.pop(0)
-			query["unit"] = words.pop(0)
-			queries.append(query)
-		hop["queries"] = queries
-		writer.push(hop)
+		if len(words) == writer.numQueries * 2:
+			while len(words) > 0:
+				query = {}
+				query["value"] = words.pop(0)
+				query["unit"] = words.pop(0)
+				queries.append(query)
+			hop["queries"] = queries
+			writer.push(hop)
+		else:
+			writer.queryTimeout = writer.queryTimeout + 1 
+
 
 parseTracerouteLine.lineNumber = 0
 
@@ -127,8 +126,7 @@ def execTraceroute(writer, cmd):
 def main(args):
 	cmd = generateCommand(args)
 	filename = args.file if args.file else "results-{}.xml".format(args.host)
-	writer = XmlWriter(filename)
-	writer.pushHeader(args)
+	writer = XmlWriter(filename, args.queries)
 	execTraceroute(writer, cmd)
 	writer.flush()
 
