@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-import xml.etree.ElementTree as ET
-import pandas as pd
 import numpy as np
-import networkx as nx
 import matplotlib.pyplot as plt
-import matplotlib as mpl 
-from matplotlib.backend_tools import ToolBase, ToolToggleBase
-import matplotlib.patches as patches
+import xml.etree.ElementTree as ET
 
 def parse(filename):
 	try:
@@ -43,35 +38,32 @@ def main(filename):
 	data = parse(filename)
 	if data is not None:
 		print(data)
-		mpl.rcParams['toolbar'] = 'None'
+		#mpl.rcParams['toolbar'] = 'None'
 		fig = plt.figure(num='lol')
-		#fig.set_facecolor("#00000F")
+		columns = ('Freeze', 'Wind', 'Flood', 'Quake', 'Hail')
+		rows = ["1", "2", "3", "4", "435"]
+		yerr = 2
 
-		"""
-		df = pd.DataFrame({ 'from':['A', 'B', 'C','A'], 'to':['D', 'A', 'E','C'] })
-		 
-		G=nx.from_pandas_edgelist(df, 'from', 'to', create_using=nx.Graph() )
-		nx.draw(G, with_labels=True, node_color='skyblue', node_size=1500, edge_color='white')
-		"""
-		G = nx.Graph()
-		i = 0
-		while i <= 10:
-			if i < 10:
-				G.add_edge(i+1,i)
-			G.add_node(i, pos=(i,2))
-			i = i +1
+		cell_text = []
+		for row in range(5):
+		    plt.errorbar(row, row + 2,  yerr=row, fmt='s')
+		  
+		    cell_text.append(['012', '123', '234', '345'])
 
-		currentAxis = plt.gca()
-		pos=nx.get_node_attributes(G,'pos')
-		rect = patches.Rectangle((50,100),40,30,linewidth=1,edgecolor='r',facecolor='none')
+		print(cell_text)
+		the_table = plt.table(cellText=cell_text,
+		                      rowLabels=rows,
+		                      colLabels=columns,
+		                      loc='bottom')
 
 
 
-		nx.draw(G, pos,with_labels=True,node_size=1500, node_color="skyblue", node_shape="s", alpha=0.5, linewidths=1)
+		plt.subplots_adjust(left=0.2, bottom=0.2)
+		plt.ylabel("Loss in 's")
+		plt.xticks([])
+		plt.title('Loss by Disaster')
+
 		plt.show()
-
-
-
 
 
 
