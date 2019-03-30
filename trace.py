@@ -122,6 +122,8 @@ def execTraceroute(writer, cmd):
 			parseTracerouteLine(writer, line)
 	except subprocess.CalledProcessError as e:
 		print("Error from traceroute command.")
+	except:
+		print("Error:")
 
 def main(args):
 	cmd = generateCommand(args)
