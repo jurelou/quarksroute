@@ -33,17 +33,18 @@ class XmlWriter():
 		rootHops = SubElement(self.root, "hops")
 		for item in self.hopsList:
 			entry = SubElement(rootHops, "entry")
-
 			entry.set("id", item["id"])
-			if item["ip"]: entry.set("ip", item["ip"])
-			if item["dns"]: entry.set("dns", item["dns"])
-			if item["errors"]: entry.set("errors", item["errors"])
-			if item["queries"]:
-				queries = SubElement(entry, "queries")				
-				for queryData in item["queries"]:
-					query = SubElement(queries, "query")
-					query.set("value", queryData["value"])
-					query.set("unit", queryData["unit"])
+			for response in item["responses"]:
+				responseElem = SubElement(entry, "response")
+				if "ip" in response: responseElem.set("ip", response["ip"])
+				if "dns" in response: responseElem.set("dns", response["dns"])
+				if "errors" in response: responseElem.set("errors", response["errors"])
+				if "queries" in response:
+					queries = SubElement(responseElem, "queries")				
+					for queryData in response["queries"]:
+						query = SubElement(queries, "query")
+						query.set("value", queryData["value"])
+						query.set("unit", queryData["unit"])
 		self.file.write(self.prettify(self.root))
 		self.file.close()
 
@@ -99,23 +100,42 @@ def parseTracerouteLine(writer, line):
 	if parseTracerouteLine.lineNumber != 1:
 		print(line, end="")
 		words = line.split()
-		hop = {"dns": "", "ip": "", "errors": "", "queries": []}
+		if words == [] :return
+		hop = {"responses": []}
 		hop["id"] = words.pop(0)
+		response = {"errors": ""}
 		while (len(words)):
 			token = words.pop(0)
-			if token in errors:  hop["errors"] = hop["errors"] + token
-			elif not hop["dns"]: hop["dns"] = token
-			elif not hop["ip"]:  hop["ip"] = token[1:-1]
-			elif len(words) > 0:
-				query = {}
-				query["value"] = token
-				query["unit"] = words.pop(0)
-				hop["queries"].append(query)		
+			try:
+				float(token)
+				if len(words) > 0:
+					query = {}
+					query["value"] = token
+					query["unit"] = words.pop(0)
+					response["queries"].append(query)		
+			except ValueError:
+				if token in errors:  
+					response["errors"] = response["errors"] + token
+				else:
+					if "dns" in response:
+						hop["responses"].append(response)
+					response = {"dns": token, "ip": words.pop(0)[1:-1], "queries": [], "errors": ""}
+
+		hop["responses"].append(response)
 		writer.push(hop)
 parseTracerouteLine.lineNumber = 0
 
 def execTraceroute(writer, cmd):
 	print("Running command: {}".format(' '.join(cmd)))
+	filepath = 'toto'  
+	with open(filepath) as fp:  
+		line = fp.readline()
+		cnt = 1
+		while line:
+			parseTracerouteLine(writer, line)
+			line = fp.readline()
+			cnt += 1
+	return True
 	try:
 		for line in execute(cmd):
 			parseTracerouteLine(writer, line)
