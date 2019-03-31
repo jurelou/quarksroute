@@ -1,0 +1,141 @@
+<?xml version="1.0" ?>
+<root>
+  <header numQueries="3" target="fr.wikipedia.org"/>
+  <hops>
+    <entry id="1">
+      <response dns="_gateway" errors="" ip="51.38.176.1">
+        <queries>
+          <query unit="ms" value="0.470"/>
+          <query unit="ms" value="0.403"/>
+          <query unit="ms" value="0.382"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="2">
+      <response dns="192.168.250.254" errors="" ip="192.168.250.254">
+        <queries>
+          <query unit="ms" value="0.364"/>
+          <query unit="ms" value="0.322"/>
+          <query unit="ms" value="0.297"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="3">
+      <response dns="10.69.45.190" errors="" ip="10.69.45.190">
+        <queries>
+          <query unit="ms" value="0.331"/>
+          <query unit="ms" value="0.315"/>
+          <query unit="ms" value="0.315"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="4">
+      <response dns="10.69.40.56" errors="" ip="10.69.40.56">
+        <queries>
+          <query unit="ms" value="0.296"/>
+          <query unit="ms" value="0.315"/>
+        </queries>
+      </response>
+      <response dns="10.69.40.58" errors="" ip="10.69.40.58">
+        <queries>
+          <query unit="ms" value="0.278"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="5">
+      <response dns="10.69.0.0" errors="" ip="10.69.0.0">
+        <queries>
+          <query unit="ms" value="0.414"/>
+        </queries>
+      </response>
+      <response dns="10.69.0.8" errors="" ip="10.69.0.8">
+        <queries>
+          <query unit="ms" value="0.316"/>
+        </queries>
+      </response>
+      <response dns="10.69.0.2" errors="" ip="10.69.0.2">
+        <queries>
+          <query unit="ms" value="0.340"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="6">
+      <response dns="10.17.146.2" errors="" ip="10.17.146.2">
+        <queries>
+          <query unit="ms" value="0.725"/>
+          <query unit="ms" value="0.599"/>
+        </queries>
+      </response>
+      <response dns="10.17.146.6" errors="" ip="10.17.146.6">
+        <queries>
+          <query unit="ms" value="0.679"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="7">
+      <response dns="10.73.0.96" errors="" ip="10.73.0.96">
+        <queries>
+          <query unit="ms" value="0.218"/>
+        </queries>
+      </response>
+      <response dns="10.73.0.98" errors="" ip="10.73.0.98">
+        <queries>
+          <query unit="ms" value="0.400"/>
+        </queries>
+      </response>
+      <response dns="10.73.0.74" errors="" ip="10.73.0.74">
+        <queries>
+          <query unit="ms" value="0.354"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="8">
+      <response dns="10.95.33.10" errors="" ip="10.95.33.10">
+        <queries>
+          <query unit="ms" value="1.939"/>
+        </queries>
+      </response>
+      <response dns="10.95.33.8" errors="" ip="10.95.33.8">
+        <queries>
+          <query unit="ms" value="3.695"/>
+        </queries>
+      </response>
+      <response dns="10.95.33.10" errors="" ip="10.95.33.10">
+        <queries>
+          <query unit="ms" value="3.083"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="9">
+      <response dns="be100-1108.ams-1-a9.nl.eu" errors="" ip="213.186.32.211">
+        <queries>
+          <query unit="ms" value="7.841"/>
+          <query unit="ms" value="8.194"/>
+        </queries>
+      </response>
+      <response dns="be100-1112.ams-5-a9.nl.eu" errors="" ip="213.251.128.67">
+        <queries>
+          <query unit="ms" value="7.908"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="10">
+      <response dns="ae2.cr2-esams.wikimedia.org" errors="" ip="80.249.209.176">
+        <queries>
+          <query unit="ms" value="8.108"/>
+          <query unit="ms" value="8.091"/>
+          <query unit="ms" value="8.279"/>
+        </queries>
+      </response>
+    </entry>
+    <entry id="11">
+      <response dns="text-lb.esams.wikimedia.org" errors="" ip="91.198.174.192">
+        <queries>
+          <query unit="ms" value="8.150"/>
+          <query unit="ms" value="8.302"/>
+          <query unit="ms" value="8.190"/>
+        </queries>
+      </response>
+    </entry>
+  </hops>
+</root>
