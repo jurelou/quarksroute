@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<root>
+  <header numQueries="3" queryTimeouts="10" target="example.com"/>
+  <hops>
+    <entry dns="_gateway" id="1" ip="51.38.176.1">
+      <queries>
+        <query unit="ms" value="0.668"/>
+        <query unit="ms" value="0.657"/>
+        <query unit="ms" value="0.643"/>
+      </queries>
+    </entry>
+    <entry dns="192.168.250.254" id="2" ip="192.168.250.254">
+      <queries>
+        <query unit="ms" value="0.628"/>
+        <query unit="ms" value="0.601"/>
+        <query unit="ms" value="0.592"/>
+      </queries>
+    </entry>
+    <entry dns="10.69.45.190" id="3" ip="10.69.45.190">
+      <queries>
+        <query unit="ms" value="0.577"/>
+        <query unit="ms" value="0.563"/>
+        <query unit="ms" value="0.558"/>
+      </queries>
+    </entry>
+    <entry dns="10.95.33.10" id="8" ip="10.95.33.10">
+      <queries>
+        <query unit="ms" value="1.400"/>
+        <query unit="ms" value="1.403"/>
+        <query unit="ms" value="1.549"/>
+      </queries>
+    </entry>
+    <entry dns="be100-1107.ldn-1-a9.uk.eu" id="9" ip="91.121.215.179">
+      <queries>
+        <query unit="ms" value="3.551"/>
+        <query unit="ms" value="3.558"/>
+        <query unit="ms" value="3.553"/>
+      </queries>
+    </entry>
+    <entry dns="93.184.216.34" id="16" ip="93.184.216.34">
+      <queries>
+        <query unit="ms" value="94.569"/>
+        <query unit="ms" value="95.291"/>
+        <query unit="ms" value="94.710"/>
+      </queries>
+    </entry>
+  </hops>
+</root>
