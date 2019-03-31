@@ -13,7 +13,7 @@ class GUI():
 	def __init__(self, data):
 		mpl.rcParams['toolbar'] = 'None'
 		mpl.rcParams.update({'font.size': 14})
-		self.rows = ["Dns", "Minimum latency", "Average latency","Maximum latency"]
+		self.rows = ["Dns", "Minimum latency", "Average latency","Maximum latency", "errors"]
 		self.data = data
 		self.cellsText = []
 		self.columns = ()
@@ -23,20 +23,22 @@ class GUI():
 		plt.figure(num="QuarksrouteGraph")
 		self.columns = tuple([(element["ip"]) for element in self.data["hops"]])
 		minimumLat = [hop["min"] for hop in self.data["hops"]]
-		diff = [hop["max"] - hop["min"] + 2  for hop in self.data["hops"]]
+		maximumLat = [hop["max"]  for hop in self.data["hops"]]
+		diff = [hop["max"] - hop["min"] + (max(maximumLat) / 20) for hop in self.data["hops"]]
 		b_color  = ['b'] * len(self.rows)
-		index = np.arange(len(self.columns)) + 0.3
+		index = np.arange(len(self.columns))
 		plt.bar(index, diff, 0.2, bottom=minimumLat, color=b_color)
 
 
 	def addTable(self):
 		plt.figure(num="QuarksrouteGraph")
 		if self.columns:
-			plt.title('Results for: {}\n{} devices did not responded'.format(self.data["header"]["target"], self.data["header"]["queryTimeouts"]))
+			plt.title('Results for: {}.\n{} device(s) did not responded'.format(self.data["header"]["target"], self.data["header"]["timeouts"]))
 			self.cellsText.append([hop["dns"][:16] for hop in self.data["hops"]])
 			self.cellsText.append(["{} {}".format(str(hop["min"]), hop["unit"]) for hop in self.data["hops"]])
 			self.cellsText.append(["{} {}".format(str(hop["avg"]), hop["unit"]) for hop in self.data["hops"]])
 			self.cellsText.append(["{} {}".format(str(hop["max"]), hop["unit"]) for hop in self.data["hops"]])
+			self.cellsText.append(["{}".format(hop["errors"]) for hop in self.data["hops"]])
 			c_color  = ['c'] * len(self.rows)
 			table = plt.table(cellText=self.cellsText,
 			                      rowLabels=self.rows,
@@ -48,7 +50,7 @@ class GUI():
 			maximumLat = [hop["max"]  for hop in self.data["hops"]]		
 			plt.subplots_adjust(left=0.2, bottom=0.2)
 			plt.ylabel("Latency")
-			plt.yticks(np.arange(0, max(maximumLat) + (max(maximumLat) / 10), max(maximumLat) / 10))
+			plt.yticks(np.arange(0, max(maximumLat) * 1.1, step=max(maximumLat) / 10))
 			plt.xticks([])		
 		else:
 			plt.title('No results found for: {}'.format(self.data["header"]["target"]))
@@ -88,13 +90,13 @@ def parseFile(filename):
 		data = {"header":{}, "hops":[]}
 		header = root.find('header')
 		data["header"]["numQueries"] = header.get('numQueries')
-		data["header"]["queryTimeouts"] = header.get('queryTimeouts')
 		data["header"]["target"] = header.get('target')
 		for entry in root.findall('hops/entry'):
 			entryData = {}
 			entryData["id"] = entry.get("id")
-			entryData["ip"] = entry.get("ip")
-			entryData["dns"] = entry.get("dns")
+			entryData["ip"] = entry.get("ip") if entry.get("ip") else ""
+			entryData["dns"] = entry.get("dns") if entry.get("dns") else ""
+			entryData["errors"] = entry.get("errors") if entry.get("errors") else ""
 			queries = []
 			for query in entry.findall('queries/query'):
 				queryData = {}
@@ -122,18 +124,7 @@ def getHostAddress():
 		client.close()
 	return response.decode().split("\r\n\r\n")[1]
 
-def calcStats(data):
-	reader = geolite2.reader()
-	for hop in data["hops"]:
-		hop["geo"] = reader.get(getHostAddress()) if hop["id"] == "1" else reader.get(hop["ip"])
-		hop["min"] = hop["delta"] = hop["max"] = hop["avg"] = sum = 0
-		for query in hop["queries"]:
-			if hop["max"] == 0 or float(query["value"]) > hop["max"]: hop["max"] = float(query["value"])
-			if hop["min"] == 0 or float(query["value"]) < hop["min"]: hop["min"] = float(query["value"])
-			sum = sum + float(query["value"])
-			hop["unit"] = query["unit"]
-		if len(hop["queries"]) > 0: hop["avg"] = "{0:.2f}".format(sum / len(hop["queries"]))
-		hop["delta"] = (hop["max"] - hop["min"])  / 2
+def calcGeopos(data):
 	lowCorner = highCorner = (None, None)
 	for hop in data["hops"]:
 		if hop["geo"] is not None:
@@ -147,9 +138,35 @@ def calcStats(data):
 				highCorner = (longitude, highCorner[1])
 			if highCorner[1] is None or latitude > highCorner[1]:
 				highCorner = (highCorner[0], latitude)
-	data["header"]["lowCorner"] = (lowCorner[0] - 5, lowCorner[1] - 2) 
-	data["header"]["highCorner"] = (highCorner[0] + 5, highCorner[1] + 2) 
-	return(data)
+	data["header"]["lowCorner"] = (lowCorner[0] + ((-180 + lowCorner[0]) / 5), lowCorner[1] + ((-85 + lowCorner[1]) / 1.5) )
+	data["header"]["highCorner"] = (highCorner[0] + ((180 - highCorner[0]) / 5),  highCorner[1] + ((85 - highCorner[1]) / 1.5)) 
+	return data
+
+def findTimeouts(data):
+	cpt = 0
+	for hop in data["hops"]:
+		if not hop["ip"] and not hop["dns"] and not hop["queries"]: cpt = cpt + 1
+	data["header"]["timeouts"] = str(cpt)
+	return data
+def calcStats(data):
+	data = findTimeouts(data)
+	data["hops"] = [hop for hop in data["hops"] if hop["ip"]]
+	reader = geolite2.reader()
+	for hop in data["hops"]:
+		hop["geo"] = None
+		if hop["id"] == "1":
+			hop["geo"] = reader.get(getHostAddress()) 
+		elif hop["ip"]:
+			hop["geo"] = reader.get(hop["ip"])
+		hop["min"] = hop["delta"] = hop["max"] = hop["avg"] = hop["unit"] = sum = 0
+		for query in hop["queries"]:
+			if hop["max"] == 0 or float(query["value"]) > hop["max"]: hop["max"] = float(query["value"])
+			if hop["min"] == 0 or float(query["value"]) < hop["min"]: hop["min"] = float(query["value"])
+			sum = sum + float(query["value"])
+			hop["unit"] = query["unit"]
+		if len(hop["queries"]) > 0: hop["avg"] = "{0:.2f}".format(sum / len(hop["queries"]))
+		hop["delta"] = (hop["max"] - hop["min"])  / 2
+	return(calcGeopos(data))
 
 def main(filename):
 	data = parseFile(filename)

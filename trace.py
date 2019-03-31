@@ -16,7 +16,6 @@ class XmlWriter():
 		print("Writing to file: {}".format(filename))
 		self.numQueries = args.queries
 		self.hopsList = []
-		self.queryTimeout = 0
 		self.file = open(filename, 'w')
 		self.root = Element('root')
 		self.rootHeader = SubElement(self.root, 'header')
@@ -32,17 +31,19 @@ class XmlWriter():
 
 	def flush(self):
 		rootHops = SubElement(self.root, "hops")
-		self.rootHeader.set("queryTimeouts", str(self.queryTimeout))
 		for item in self.hopsList:
 			entry = SubElement(rootHops, "entry")
+
 			entry.set("id", item["id"])
-			entry.set("ip", item["ip"])
-			entry.set("dns", item["dns"])
-			queries = SubElement(entry, "queries")
-			for queryData in item["queries"]:
-				query = SubElement(queries, "query")
-				query.set("value", queryData["value"])
-				query.set("unit", queryData["unit"])
+			if item["ip"]: entry.set("ip", item["ip"])
+			if item["dns"]: entry.set("dns", item["dns"])
+			if item["errors"]: entry.set("errors", item["errors"])
+			if item["queries"]:
+				queries = SubElement(entry, "queries")				
+				for queryData in item["queries"]:
+					query = SubElement(queries, "query")
+					query.set("value", queryData["value"])
+					query.set("unit", queryData["unit"])
 		self.file.write(self.prettify(self.root))
 		self.file.close()
 
@@ -94,26 +95,23 @@ def generateCommand(args):
 
 def parseTracerouteLine(writer, line):
 	parseTracerouteLine.lineNumber += 1
+	errors = ["*", "!N", "!P", "!H", "!T", "!Q", "!U", "?", "!A"]
 	if parseTracerouteLine.lineNumber != 1:
 		print(line, end="")
 		words = line.split()
-		hop = {}
+		hop = {"dns": "", "ip": "", "errors": "", "queries": []}
 		hop["id"] = words.pop(0)
-		hop["dns"] = words.pop(0)
-		hop["ip"] = words.pop(0)[1:-1]
-		queries = []
-		if len(words) == writer.numQueries * 2:
-			while len(words) > 0:
+		while (len(words)):
+			token = words.pop(0)
+			if token in errors:  hop["errors"] = hop["errors"] + token
+			elif not hop["dns"]: hop["dns"] = token
+			elif not hop["ip"]:  hop["ip"] = token[1:-1]
+			elif len(words) > 0:
 				query = {}
-				query["value"] = words.pop(0)
+				query["value"] = token
 				query["unit"] = words.pop(0)
-				queries.append(query)
-			hop["queries"] = queries
-			writer.push(hop)
-		else:
-			writer.queryTimeout = writer.queryTimeout + 1 
-
-
+				hop["queries"].append(query)		
+		writer.push(hop)
 parseTracerouteLine.lineNumber = 0
 
 def execTraceroute(writer, cmd):
@@ -123,8 +121,11 @@ def execTraceroute(writer, cmd):
 			parseTracerouteLine(writer, line)
 	except subprocess.CalledProcessError as e:
 		print("Error from traceroute command.")
-	except:
-		print("Error:")
+		return False
+	except Exception as e:
+		print("Error:", e)
+		return False
+	return True
 
 def askAnalyse(filename):
 	answer = None
@@ -141,9 +142,9 @@ def main(args):
 	cmd = generateCommand(args)
 	filename = args.file if args.file else "results-{}.xml".format(args.host)
 	writer = XmlWriter(filename, args)
-	execTraceroute(writer, cmd)
-	writer.flush()
-	askAnalyse(filename)
+	if execTraceroute(writer, cmd):
+		writer.flush()
+		askAnalyse(filename)
 
 if __name__ == "__main__":
 	args = parseArgs()
