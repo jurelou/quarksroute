@@ -5,22 +5,23 @@ import sys
 import socket
 import argparse
 import subprocess
+import analyse
 from xml.dom import minidom
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 from xml.etree.ElementTree import SubElement
 
 class XmlWriter():
-	def __init__(self, filename, numQueries):
+	def __init__(self, filename, args):
 		print("Writing to file: {}".format(filename))
-		self.numQueries = numQueries
+		self.numQueries = args.queries
 		self.hopsList = []
 		self.queryTimeout = 0
 		self.file = open(filename, 'w')
 		self.root = Element('root')
 		self.rootHeader = SubElement(self.root, 'header')
-		self.rootHeader.set("numQueries", str(numQueries))
-
+		self.rootHeader.set("numQueries", str(args.queries))
+		self.rootHeader.set("target", str(args.host))
 	def prettify(self, elem):
 	    string = ElementTree.tostring(elem, 'utf-8')
 	    prettyString = minidom.parseString(string)
@@ -31,7 +32,7 @@ class XmlWriter():
 
 	def flush(self):
 		rootHops = SubElement(self.root, "hops")
-		self.rootHeader.set("queryTimeouts", str(self.queryTimeout))		
+		self.rootHeader.set("queryTimeouts", str(self.queryTimeout))
 		for item in self.hopsList:
 			entry = SubElement(rootHops, "entry")
 			entry.set("id", item["id"])
@@ -125,12 +126,24 @@ def execTraceroute(writer, cmd):
 	except:
 		print("Error:")
 
+def askAnalyse(filename):
+	answer = None
+	while answer not in ("y", "n"):
+		try:
+			answer = input("Do you want to analyse the results ? Press [y/n]")
+		except: return
+		if answer.lower()[0] == "y":
+			return analyse.main(filename)
+		elif answer.lower()[0] == "n":
+			return
+
 def main(args):
 	cmd = generateCommand(args)
 	filename = args.file if args.file else "results-{}.xml".format(args.host)
-	writer = XmlWriter(filename, args.queries)
+	writer = XmlWriter(filename, args)
 	execTraceroute(writer, cmd)
 	writer.flush()
+	askAnalyse(filename)
 
 if __name__ == "__main__":
 	args = parseArgs()
