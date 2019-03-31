@@ -13,6 +13,7 @@ class GUI():
 	def __init__(self, data):
 		mpl.rcParams['toolbar'] = 'None'
 		mpl.rcParams.update({'font.size': 14})
+		print(mpl.get_backend())
 		self.rows = ["Dns", "Minimum latency", "Average latency","Maximum latency", "errors"]
 		self.data = data
 		self.cellsText = []
@@ -20,18 +21,18 @@ class GUI():
 		self.corners = (data["header"]["lowCorner"], data["header"]["highCorner"])
 
 	def addGraph(self):
-		plt.figure(num="QuarksrouteGraph")
+		a = plt.figure(num="QuarksrouteGraph")
 		self.columns = tuple([(res["ip"]) for hop in self.data["hops"] for res in hop["responses"]])
 		minimumLat = [res["min"] for hop in self.data["hops"] for res in hop["responses"]]
 		maximumLat = [res["max"]  for hop in self.data["hops"] for res in hop["responses"]]
 		diff = [res["max"] - res["min"] + (max(maximumLat) / 20) for hop in self.data["hops"] for res in hop["responses"]]
 		b_color  = ['b'] * len(self.rows)
 		index = np.arange(len(self.columns))
-		plt.bar(index, diff, 0.2, bottom=minimumLat, color=b_color)
+		plt.bar(index, diff,  0.3, bottom=minimumLat, color=b_color)
 
-
+		plt.subplots_adjust(left=0.09, bottom=0.6, right=0.99, top=0.93)
 	def addTable(self):
-		plt.figure(num="QuarksrouteGraph")
+		a = plt.figure(num="QuarksrouteGraph")
 		if self.columns:
 			plt.title('Results for: {}.\n{} device(s) did not responded'.format(self.data["header"]["target"], self.data["header"]["timeouts"]))
 			self.cellsText.append([res["dns"][:16] for hop in self.data["hops"] for res in hop["responses"]])
@@ -45,11 +46,20 @@ class GUI():
 			                      rowLabels=self.rows,
 			                      rowColours=c_color,
 			                      colLabels=self.columns,
+			                      cellLoc='center',
+			                      bbox=[0, -1.50, 1., 1.5],
 			                      loc='bottom')
+
+			for cell in table._cells:
+				if cell[0] == 1 or cell[0] == 0:
+					table._cells[cell].get_text().set_rotation(30)
+					table._cells[cell].get_text().set_wrap(True)
+
+
+
 			table.auto_set_font_size(False)
 			table.set_fontsize(9)
 			maximumLat = [res["max"]  for hop in self.data["hops"] for hop in self.data["hops"] for res in hop["responses"]]		
-			plt.subplots_adjust(left=0.2, bottom=0.2)
 			plt.ylabel("Latency")
 			plt.yticks(np.arange(0, max(maximumLat) * 1.1, step=max(maximumLat) / 10))
 			plt.xticks([])		
@@ -77,6 +87,8 @@ class GUI():
 		self.addMap()
 		self.addGraph()
 		self.addTable()
+		mng = plt.get_current_fig_manager()
+		mng.resize(*mng.window.maxsize())
 		plt.show()
 
 def parseFile(filename):
