@@ -8,12 +8,13 @@ import xml.etree.ElementTree as ET
 import matplotlib as mpl
 from geolite2 import geolite2
 from mpl_toolkits.basemap import Basemap
+import matplotlib.pyplot as plt
+import networkx as nx
 
 class GUI():
 	def __init__(self, data):
 		mpl.rcParams['toolbar'] = 'None'
 		mpl.rcParams.update({'font.size': 14})
-		print(mpl.get_backend())
 		self.rows = ["Dns", "Minimum latency", "Average latency","Maximum latency", "errors"]
 		self.data = data
 		self.cellsText = []
@@ -22,25 +23,25 @@ class GUI():
 
 	def addGraph(self):
 		a = plt.figure(num="QuarksrouteGraph")
-		self.columns = tuple([(res["ip"]) for hop in self.data["hops"] for res in hop["responses"]])
-		minimumLat = [res["min"] for hop in self.data["hops"] for res in hop["responses"]]
-		maximumLat = [res["max"]  for hop in self.data["hops"] for res in hop["responses"]]
-		diff = [res["max"] - res["min"] + (max(maximumLat) / 20) for hop in self.data["hops"] for res in hop["responses"]]
+		self.columns = tuple([(hop["responses"][0]["ip"]) for hop in self.data["hops"] if "ip" in hop["responses"][0]])
+		minimumLat = [hop["responses"][0]["min"] for hop in self.data["hops"] if "min" in hop["responses"][0]]
+		maximumLat = [hop["responses"][0]["max"]  for hop in self.data["hops"] if "max" in hop["responses"][0]]
+		diff = [hop["responses"][0]["max"] - hop["responses"][0]["min"] + (max(maximumLat) / 20) for hop in self.data["hops"] if "max" in hop["responses"][0] and "min" in hop["responses"][0]]
 		b_color  = ['b'] * len(self.rows)
 		index = np.arange(len(self.columns))
 		plt.bar(index, diff,  0.3, bottom=minimumLat, color=b_color)
 
-		plt.subplots_adjust(left=0.09, bottom=0.6, right=0.99, top=0.93)
+		plt.subplots_adjust(left=0.09, bottom=0.57, right=0.99, top=0.93)
 	def addTable(self):
 		a = plt.figure(num="QuarksrouteGraph")
 		if self.columns:
 			plt.title('Results for: {}.\n{} device(s) did not responded'.format(self.data["header"]["target"], self.data["header"]["timeouts"]))
-			self.cellsText.append([res["dns"][:16] for hop in self.data["hops"] for res in hop["responses"]])
+			self.cellsText.append([hop["responses"][0]["dns"][:16] for hop in self.data["hops"]])
 
-			self.cellsText.append(["{:.3f}".format(float(res["min"])) for hop in self.data["hops"] for res in hop["responses"]])
-			self.cellsText.append(["{:.3f}".format(float(res["avg"])) for hop in self.data["hops"] for res in hop["responses"]])
-			self.cellsText.append(["{:.3f}".format(float(res["max"])) for hop in self.data["hops"] for res in hop["responses"]])
-			self.cellsText.append(["{}".format(res["errors"]) for hop in self.data["hops"] for res in hop["responses"]])
+			self.cellsText.append(["{:.2f}".format(float(hop["responses"][0]["min"])) for hop in self.data["hops"]])
+			self.cellsText.append(["{:.2f}".format(float(hop["responses"][0]["avg"])) for hop in self.data["hops"]])
+			self.cellsText.append(["{:.2f}".format(float(hop["responses"][0]["max"])) for hop in self.data["hops"]])
+			self.cellsText.append(["{}".format(hop["responses"][0]["errors"]) for hop in self.data["hops"]])
 			c_color  = ['c'] * len(self.rows)
 			table = plt.table(cellText=self.cellsText,
 			                      rowLabels=self.rows,
@@ -51,12 +52,9 @@ class GUI():
 			                      loc='bottom')
 
 			for cell in table._cells:
-				if cell[0] == 1 or cell[0] == 0:
-					table._cells[cell].get_text().set_rotation(30)
+				if cell[1] != -1:
+					table._cells[cell].get_text().set_rotation(50)
 					table._cells[cell].get_text().set_wrap(True)
-
-
-
 			table.auto_set_font_size(False)
 			table.set_fontsize(9)
 			maximumLat = [res["max"]  for hop in self.data["hops"] for hop in self.data["hops"] for res in hop["responses"]]		
@@ -83,12 +81,73 @@ class GUI():
 				m.plot(head[0], head[1], linestyle='none', marker="o", markersize=8, alpha=0.6, c="cyan", markeredgecolor="black", markeredgewidth=1)
 				plt.annotate(index,  xy=(head[0], head[1] + 2))
 				index=index+1
+
+	def addTree(self):
+		plt.figure(num="QuarksrouteTree")
+		G = nx.Graph()
+		lightData = []
+		for hops in self.data["hops"]:
+			hop = []
+			for resp in hops["responses"]:
+				if resp["ip"] and not [True for h in hop if h["ip"] == resp["ip"]]:
+					hop.append(resp)
+			if hop: lightData.append(hop)
+		cpt = 0
+		tmp = {}
+		edgeLabels = {}
+
+		for hop in lightData:
+			first = True
+			for resp in hop:
+				if not tmp:
+					tmp = resp
+				if first:
+					if cpt == 0 or cpt == len(lightData) - 1:
+						G.add_node(resp["ip"], ends=False, start=True)
+					else:
+						G.add_node(resp["ip"], ends=True, start=False,)
+					first = False
+					if tmp:
+						G.add_edge(resp["ip"], tmp["ip"], path=True, label="toto")
+						edgeLabels[(tmp["ip"],resp["ip"])] = resp["avg"]
+						tmp = resp
+				else:
+					G.add_node(resp["ip"], ends=False, start=False,)
+					if tmp:
+						G.add_edge(tmp["ip"], resp["ip"], path=False, label="toto")
+						edgeLabels[(tmp["ip"],resp["ip"])] = resp["avg"]
+			cpt = cpt + 1
+		pos = nx.spring_layout(G,k=0.2)
+		startNodes = [node[0] for node in G.nodes(data=True) if node[1]["start"]]
+		endsNodes = [node[0] for node in G.nodes(data=True) if node[1]["ends"] and not node[1]["start"]]
+		otherNodes = [node[0] for node in G.nodes(data=True) if not node[1]["ends"] and not node[1]["start"]]
+		pathEdges = [(u, v) for (u, v, d) in G.edges(data=True) if d['path']]
+		otherEdges = [(u, v) for (u, v, d) in G.edges(data=True) if not d['path']]
+		nx.draw_networkx_nodes(G, pos, nodelist=endsNodes, node_color='g',node_shape='.')
+		nx.draw_networkx_nodes(G, pos, nodelist=otherNodes, node_color='r', node_shape='.')
+		nx.draw_networkx_nodes(G, pos, nodelist=startNodes, node_color='g', node_shape='s')
+		nx.draw_networkx_edges(G, pos, edgelist=pathEdges, width=1)
+		nx.draw_networkx_edges(G, pos, edgelist=otherEdges, alpha=0.5, edge_color='b', style='dashed')
+
+		pos_higher = {}
+		y_off = 0.06
+		for k, v in pos.items():
+			pos_higher[k] = (v[0], v[1]+y_off)
+		plt.axis('off')
+		nx.draw_networkx_labels(G, pos_higher, font_size=10, font_family='sans-serif')
+
+
 	def render(self):
 		self.addMap()
+		self.addTree()
 		self.addGraph()
 		self.addTable()
-		mng = plt.get_current_fig_manager()
-		mng.resize(*mng.window.maxsize())
+		
+
+
+		#mng = plt.get_current_fig_manager()
+		#mng.resize(*mng.window.maxsize())
+		
 		plt.show()
 
 def parseFile(filename):
