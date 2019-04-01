@@ -127,15 +127,6 @@ parseTracerouteLine.lineNumber = 0
 
 def execTraceroute(writer, cmd):
 	print("Running command: {}".format(' '.join(cmd)))
-	filepath = 'toto'  
-	with open(filepath) as fp:  
-		line = fp.readline()
-		cnt = 1
-		while line:
-			parseTracerouteLine(writer, line)
-			line = fp.readline()
-			cnt += 1
-	return True
 	try:
 		for line in execute(cmd):
 			parseTracerouteLine(writer, line)
