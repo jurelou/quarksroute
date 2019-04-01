@@ -30,14 +30,13 @@ class GUI():
 		b_color  = ['b'] * len(self.rows)
 		index = np.arange(len(self.columns))
 		plt.bar(index, diff,  0.3, bottom=minimumLat, color=b_color)
-
 		plt.subplots_adjust(left=0.09, bottom=0.57, right=0.99, top=0.93)
+
 	def addTable(self):
 		a = plt.figure(num="QuarksrouteGraph")
 		if self.columns:
 			plt.title('Results for: {}.\n{} device(s) did not responded'.format(self.data["header"]["target"], self.data["header"]["timeouts"]))
 			self.cellsText.append([hop["responses"][0]["dns"][:16] for hop in self.data["hops"]])
-
 			self.cellsText.append(["{:.2f}".format(float(hop["responses"][0]["min"])) for hop in self.data["hops"]])
 			self.cellsText.append(["{:.2f}".format(float(hop["responses"][0]["avg"])) for hop in self.data["hops"]])
 			self.cellsText.append(["{:.2f}".format(float(hop["responses"][0]["max"])) for hop in self.data["hops"]])
@@ -50,7 +49,6 @@ class GUI():
 			                      cellLoc='center',
 			                      bbox=[0, -1.50, 1., 1.5],
 			                      loc='bottom')
-
 			for cell in table._cells:
 				if cell[1] != -1:
 					table._cells[cell].get_text().set_rotation(50)
@@ -95,7 +93,6 @@ class GUI():
 		cpt = 0
 		tmp = {}
 		edgeLabels = {}
-
 		for hop in lightData:
 			first = True
 			for resp in hop:
@@ -142,12 +139,6 @@ class GUI():
 		self.addTree()
 		self.addGraph()
 		self.addTable()
-		
-
-
-		#mng = plt.get_current_fig_manager()
-		#mng.resize(*mng.window.maxsize())
-		
 		plt.show()
 
 def parseFile(filename):
