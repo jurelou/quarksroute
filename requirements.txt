@@ -7,7 +7,6 @@ matplotlib==3.0.3
 maxminddb==1.4.1
 maxminddb-geolite2==2018.703
 numpy==1.16.2
-pkg-resources==0.0.0
 pyparsing==2.3.1
 pyproj==1.9.6
 pyshp==2.1.0
