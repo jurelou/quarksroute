@@ -23,6 +23,8 @@ class TraceroutePlugin(PluginInterface):
         appeler la fonction _parseTraceroute() avec l'output de la fonction traceroute
 
         Retourne le chemin vers le fichier XML de resultats
+        
+        NOTE: on peut prévoir une liste de targets et retourner une liste de chemins
         """
 
     def analyse(self, cheminFichierBrut):
