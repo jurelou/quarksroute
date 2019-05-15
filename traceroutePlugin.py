@@ -1,5 +1,4 @@
 
-
 class TraceroutePlugin(PluginInterface):
     def __init__(self, options = None):
         """
@@ -27,16 +26,22 @@ class TraceroutePlugin(PluginInterface):
         NOTE: on peut prévoir une liste de targets et retourner une liste de chemins
         """
 
-    def analyse(self, cheminFichierBrut):
+    def analyse(self, cheminFichier):
         """
-        Apelle la fonction _analysefile() avec le chemin donné
+        apelle la fonction _unserialise avec le paramètre `cheminFichier`.
+        on récupère un objet python, on y rajoute nos analyses
+        (par example: générer les latences moyennes, maximales, minimales pour chaque "hop")
+        apelle la fonction _serialise avec le nouvel objet python et le chemin vers le fichier d'analyse.
+        Par example: le paramètre `cheminFichier` est: /opt/probes/traceroute/log/89DD2.xml
+        Le fichier d'analyse sera: /opt/probes/traceroute/log/89DD2-analyse.xml
 
-        retourne le chemin vers le fichier d'analyse
+        Retourner le chemin vers le fichier d'analyse
         """
 
-    def visualise(self, cheminFichierAnalysé):
+    def visualise(self, cheminFichier):
         """
-        apelle la fonction _display() avec le chemin donné
+        apelle la fonction _unserialise avec le paramètre `cheminFichier`
+        générer les interfaces avec le résultat de la fonction _unserialise puis afficher les resultats graphiquement
         """
 
     def getVersion(self):
@@ -50,28 +55,28 @@ class TraceroutePlugin(PluginInterface):
 
     def _parseTraceroute(self, output):
         """
-        parse toutes les lignes de l'ouput sauf la première.
+        parse toutes les lignes de l'ouput sauf la première et stocke le résultat dans un objet python
         génère un identifiant unique (par ex: 89DD2)
-        sérialize le resultat sous le format JSON et l'écris dans le fichier /opt/probes/traceroute/log/89DD2.xml
+        crée le fichier /opt/probes/traceroute/89DD2.xml
+        apelle la methode _serialize avec l'objet python et le chemin vers le fichier (/opt/probes/traceroute/89DD2.xml)
+
         retourne le chemin vers le fichier (/opt/probes/traceroute/log/89DD2.xml)
         """
 
-    def _analysefile(self, path):
+    def _unserialise(path):
         """
-        Lis le fichier via le path donné puis analyse le résulat
-        (par example: générer les latences moyennes, maximales, minimales pour chaque "hop")
-        Ecrire le resultat dans le fichier d'analyse.
-        Par example: le fichier de résultat est: /opt/probes/traceroute/log/89DD2.xml
-        Le fichier d'analyse sera: /opt/probes/traceroute/log/89DD2-analyse.xml
-
-        Retourner le chemin vers le fichier d'analyse
+        ouvre le fichier correspondant au path
+        parse le fichier XML puis génère un objet python.
+       
+        Retourne l'objet python
+       """
+        
+    def _serialise(path, objet):
         """
-
-    def _display(self, path):
+        ouvre le fichier correspondant au path
+        transforme le paramètre `objet` en XML puis l'écris dans le fichier
         """
-        Lis le fichier via le chemin donné, et  affiche le résultat
-        """
-
+       
 
 # =====================
 #  Exemple d utilisation du plugin
