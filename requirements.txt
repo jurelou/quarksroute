@@ -15,5 +15,5 @@ python-geoip==1.2
 python-geoip-geolite2==2015.303
 requests==2.21.0
 six==1.12.0
-urllib3==1.24.1
+urllib3==1.24.2
 networkx==2.2
